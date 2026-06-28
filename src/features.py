@@ -41,3 +41,14 @@ def saturation_score(image_bgr):
     image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
     saturation_channel = image_hsv[:, :, 1]  # the S channel, 0 to 255
     return float(saturation_channel.mean() / 255.0)
+
+def brightness_score(image_bgr):
+    """Return the mean brightness, scaled to the range 0 to 1.
+
+    Brightness is the overall light level of the image. Computed as the mean of
+    the V (value) channel of the HSV form, which is the per-pixel maximum across
+    colour channels. Low means a dark or night scene; high means a bright one.
+    """
+    image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
+    value_channel = image_hsv[:, :, 2]  # the V channel, 0 to 255
+    return float(value_channel.mean() / 255.0)
