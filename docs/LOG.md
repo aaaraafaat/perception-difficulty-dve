@@ -185,4 +185,178 @@ apart; it does not prove the feature tells them apart by fog rather than by
 something else (night, colour, grey content). The earlier discovery — that
 single cues are fooled by night, coloured light, and grey scenes — means a good
 spread is necessary but not sufficient. The real test is how the features relate
-to each other and, ultimately,
+to each other and, ultimately, to detection difficulty.
+
+## 2026-06-28 — Colour findings: saturation, colourfulness, and their gap (RTTS)
+
+Two colour-based features were examined on the 4,322 RTTS images: saturation
+(average colour vividness) and colourfulness (the variety and spread of colours).
+They measure related but different things, and comparing them revealed how colour
+behaves under fog and coloured lighting.
+
+Finding 1 — the two cues agree on grey fog, disagree on coloured haze.
+On dense grey fog scenes, both saturation and colourfulness drop together toward
+zero (fog washes the scene to grey, removing both vividness and variety). On
+scenes lit by a single strong coloured light — the orange streetlight and
+headlight haze — they split sharply: saturation is extremely high (top of the
+dataset, ~0.80–0.96) because every pixel is vivid orange, but colourfulness is
+only moderate because there is just one colour, not many. So the two cues are
+redundant on grey scenes and carry different information on coloured scenes.
+
+Finding 2 — the useful colour signal is the GAP between the two cues, not either
+one alone. A large saturation-minus-colourfulness gap means "vivid because of one
+coloured light source" (the orange-haze signature). A small gap with both low
+means grey fog. This is a concrete example of why combining cues matters: neither
+saturation nor colourfulness alone identifies coloured-light haze, but their
+difference does.
+
+Finding 3 — low colourfulness is an independent fog signal, but with a caveat.
+The least-colourful images are dense grey fog (or near-greyscale) scenes, so low
+colourfulness does flag fog — and it does so via colour, independently of the
+dark channel, which flags fog via missing darkness. However, at the extreme it
+goes to exactly zero and coincides with zero saturation, so at that extreme the
+two colour cues become redundant.
+
+Finding 4 — high colourfulness picks out genuinely multicoloured (clearer)
+scenes, and correctly excludes the orange-haze scenes. The most-colourful images
+have many real colours and low dark-channel scores (the dark channel also reads
+them as clearer). The single-colour orange-haze scenes do NOT appear in this
+group, confirming colourfulness separates "many real colours" (clear) from "one
+strong colour" (coloured haze).
+
+Open question to investigate next. Several of the lowest-colourfulness images read
+exactly 0.000 on both colour cues, yet by eye they are foggy colour scenes that
+should retain at least a little colour — they should not lose colour entirely.
+This suggests some images may be true greyscale FILES (stored with no colour at
+all, R=G=B everywhere), which would force both colour cues to exactly zero for a
+reason unrelated to fog. If so, this is a dataset confound to identify and handle
+separately, not extreme decolourising fog. To be checked by counting the
+exactly-zero images and testing whether their colour channels are identical.
+
+## 2026-06-28 — Greyscale image artefact in RTTS (dataset cleaning)
+
+During analysis of the colour-based features, 46 of the 4,322 RTTS images were
+found to be true greyscale images — that is, their red, green, and blue channels
+are identical at every pixel, so the image contains no colour information at all.
+These were identified using the standard definition of a greyscale image
+(pixel-wise equality of the three colour channels), not a score threshold, making
+the identification exact and unambiguous.
+
+These 46 images are a dataset artefact rather than a property of the scene: their
+zero colourfulness and zero saturation arise because the files are stored without
+colour, not because fog has removed it. Left unaddressed, they would be
+misinterpreted by any colour-based degradation measure as maximally
+decolourised — the appearance of extreme fog — and would therefore distort
+colour-dependent analysis. A pixel-level check confirmed that all 46, and only
+these 46, are greyscale: every greyscale image scored exactly zero on both colour
+cues, and no additional near-greyscale images were hidden above zero.
+
+Accordingly, the 46 greyscale images are flagged with a dedicated indicator and
+excluded from colour-based analysis, while being retained in the dataset and
+reported as a documented characteristic of RTTS. This represents 1.1% of the
+dataset. Identifying and isolating this artefact, rather than allowing it to pass
+silently into the colour features, is part of ensuring that measured colour
+behaviour reflects genuine scene degradation and not file-format effects.
+
+## Saving the greyscale flag, and a colour-clean copy
+
+The `is_greyscale` flag is added to the feature table and saved, so every image
+stays in the main file but greyscale images remain identifiable. A second file is
+also written with the 46 greyscale images removed — a colour-clean version for the
+colour-based analysis, so those black-and-white files cannot distort the colour
+features. The original full table is kept; nothing is deleted.
+
+## 2026-06-28 — Data cleaning summary: greyscale and near-duplicate images (RTTS)
+
+Two dataset artefacts were identified and handled before analysis, each by an
+exact, content-based test rather than a score threshold, and each flagged rather
+than deleted so the dataset count remains documented and recoverable.
+
+Greyscale images. 46 of the 4,322 RTTS images are true greyscale (red, green, and
+blue channels identical at every pixel), identified by pixel-wise channel
+equality. These contain no colour information, so they read as maximally
+decolourised on any colour-based measure for a file-format reason unrelated to
+fog, and would otherwise distort colour analysis. They are flagged (is_greyscale)
+and excluded from colour-based analysis.
+
+Near-duplicate images. Near-duplicates were identified by perceptual hashing,
+which compares image content rather than feature scores (visually different scenes
+can share nearly identical scores, so scores cannot be used for this). The
+matching distance was selected empirically: a sweep showed loose thresholds
+collapse the grouping (distance 20 drew 3,871 images into a few clusters; 15 and
+10 grouped clearly different scenes), so distance 6 was adopted as the strictest
+setting that still captured genuine near-duplicates (distances 6 and 7 were
+identical). Inspection of the resulting groups confirmed 28 genuine groups (25
+pairs and 3 triples) of same-scene frames — some captured only moments apart with
+a vehicle or pedestrian having moved slightly, some at minor angle changes. Two
+false-match groups were removed by hand: one pair of near-featureless images (a
+flat dark-grey texture and a bright hazy sky) the hash confused for lack of
+distinguishing structure, and one pair of different subjects sharing a single
+figure-against-hazy-background composition — both known limitations of perceptual
+hashing, caught by inspection rather than accepted on the score. This leaves 31
+images flagged as near-duplicates (is_duplicate), with one image retained per
+group.
+
+Cleaned analysis set. Removing the 46 greyscale and 31 near-duplicate images (no
+image was both) leaves 4,245 images for the cleaned analysis set, approximately
+1.8% of the dataset removed. The full table retains all images and flags; the
+cleaned table is used for the feature analysis.
+
+## 2026-06-28 — Feature-score near-duplicates: an alternative detection method (recorded, not removed)
+
+A second, complementary way of finding near-duplicate images was explored: instead
+of comparing image content (as perceptual hashing does), images were compared on
+their measured properties — the eight feature scores (dark channel, saturation,
+brightness, contrast, entropy, sharpness, noise, colourfulness), each scaled to a
+common 0-1 range, with similarity measured as the Euclidean distance across all
+eight together. Two images close on this combined distance are near-identical in
+every measured property at once.
+
+Applied to the cleaned set (greyscale and perceptual-hash duplicates already
+removed), this method surfaced additional near-duplicates that perceptual hashing
+had missed. The number of pairs grew sharply with the distance threshold — 2 pairs
+at distance 0.01, 23 pairs at 0.02, and 108 pairs at 0.03 — so 0.02 marks the
+tight region where pairs are still predominantly genuine. Inspection of the 23
+pairs at distance 0.02 found that 20 were genuine near-duplicate frames of the same
+scene (same camera position, lighting, and conditions, captured seconds apart),
+and 3 were same-viewpoint images with different objects present (for example, one
+versus two vehicles).
+
+These were recorded but deliberately NOT removed from the analysis set. The
+same-viewpoint-different-object pairs are ambiguous: because the objects present
+differ, they may be legitimately distinct observations for a detection-difficulty
+study rather than redundant duplicates, so removing them could discard real data.
+Accordingly, the affected images are flagged with a feature_near_duplicate
+indicator in the full table, leaving the decision of whether to exclude them to any
+future work, while the cleaned analysis set is unchanged at 4,245 images.
+
+This also establishes a methodological point: feature-score similarity is a usable
+alternative duplicate-finding method, complementary to perceptual hashing — each
+catches some near-duplicates the other misses — but it is unreliable as a
+standalone duplicate detector, because the boundary between genuine duplicates and
+merely similar scenes blurs as the threshold loosens (108 pairs by distance 0.03).
+Content-based hashing remains the primary method; feature similarity is a useful
+secondary check.
+
+## 2026-06-28 — Stage 1 complete (session close)
+
+Stage 1 (RTTS feature extraction and cleaning) is finished and saved.
+
+Done:
+- RTTS loaded (4,322 images), copied to local disk for fast access.
+- Eight training-free features computed and range-verified: dark channel,
+  saturation, brightness, contrast, entropy, sharpness, noise, colourfulness.
+- Two confounds found and handled (flagged, not deleted): 46 greyscale images
+  (R=G=B), and 31 near-duplicates across 28 groups (perceptual hash, distance 6).
+- Feature-score near-duplicates recorded as an optional flag (feature_near_duplicate),
+  not removed.
+- Saved: features_RTTS.csv (master, all images + flags) and features_RTTS_clean.csv
+  (cleaned analysis set, 4,245 images).
+- Notebook: 01_rtts_feature_extraction_and_cleaning.ipynb.
+
+Next session:
+- Optional first: Restart and run all on notebook 01 to confirm reproducibility.
+- Start notebook 02 (analysis): load features_RTTS_clean.csv and build the
+  correlation table across the eight features — the first numerical view of which
+  cues agree, which are redundant, and which are weak (sharpness and noise
+  suspected weak; saturation/colourfulness overlap on grey scenes).
