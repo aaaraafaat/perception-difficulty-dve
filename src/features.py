@@ -52,3 +52,74 @@ def brightness_score(image_bgr):
     image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
     value_channel = image_hsv[:, :, 2]  # the V channel, 0 to 255
     return float(value_channel.mean() / 255.0)
+
+def contrast_score(image_bgr):
+    """Return image contrast as the standard deviation of brightness, scaled to 0-1.
+
+    Contrast is how widely the image ranges from dark to light. Fog flattens
+    everything toward mid-grey, so haze lowers contrast. Lower means flat/foggy;
+    higher means a punchy dark-to-light range.
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    return float(gray.std() / 128.0)  # /128 keeps typical values in 0-1
+
+
+def entropy_score(image_bgr):
+    """Return the brightness entropy in bits (typically 0 to 8).
+
+    Entropy measures how much detail / variety of brightness values the image
+    holds. A clear scene is full of texture and varied tones (high entropy); fog
+    smooths the scene toward uniform grey (low entropy). Higher means more
+    detail; lower means smoothed-out / foggy.
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    histogram = cv2.calcHist([gray], [0], None, [256], [0, 256]).ravel()
+    probabilities = histogram / histogram.sum()
+    probabilities = probabilities[probabilities > 0]  # ignore empty bins
+    return float(-(probabilities * np.log2(probabilities)).sum())
+
+
+def colourfulness_score(image_bgr):
+    """Return a colourfulness measure (Hasler-Susstrunk), scaled to roughly 0-1.
+
+    Colourfulness measures the spread and variety of colours, not just their
+    average vividness. A scene lit by a single coloured light (e.g. orange haze)
+    is vivid but has little colour variety, so it scores LOW here even when
+    saturation is high - which is how this separates one-colour scenes from
+    genuinely multicoloured ones. Higher means a wide variety of colours.
+    """
+    blue, green, red = cv2.split(image_bgr.astype("float"))
+    rg = red - green                       # red-green opposition
+    yb = 0.5 * (red + green) - blue        # yellow-blue opposition
+    rg_std, yb_std = np.std(rg), np.std(yb)
+    rg_mean, yb_mean = np.mean(rg), np.mean(yb)
+    std_root = np.sqrt(rg_std ** 2 + yb_std ** 2)
+    mean_root = np.sqrt(rg_mean ** 2 + yb_mean ** 2)
+    colourfulness = std_root + 0.3 * mean_root
+    return float(colourfulness / 255.0)
+
+
+def sharpness_score(image_bgr):
+    """Return image sharpness (variance of the Laplacian), scaled toward 0-1.
+
+    Sharpness measures how crisp the edges and fine detail are. Fog blurs edges,
+    so haze lowers sharpness. Lower means blurred / foggy; higher means crisp
+    detail. Capped at 1.0 since very sharp images can exceed the scaling range.
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    laplacian_variance = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return float(min(laplacian_variance / 1000.0, 1.0))  # /1000 and cap at 1
+
+
+def noise_score(image_bgr):
+    """Return an estimate of image noise / grain, scaled toward 0-1.
+
+    Noise is random pixel-level grain, most visible in dark / night / low-light
+    scenes. Estimated as the difference between the image and a slightly blurred
+    version (blurring removes fine grain). Higher means grainier; relevant for
+    flagging night and low-light images. Capped at 1.0.
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY).astype("float")
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+    noise_estimate = np.abs(gray - blurred).mean()
+    return float(min(noise_estimate / 20.0, 1.0))  # /20 and cap at 1
