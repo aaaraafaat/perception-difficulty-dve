@@ -103,3 +103,29 @@ def noise_score(image_bgr):
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
     noise_estimate = np.abs(gray - blurred).mean()
     return float(min(noise_estimate / 20.0, 1.0))  # /20 and cap at 1
+
+def colourfulness_score(image_bgr):
+    """Return image colourfulness (Hasler-Susstrunk metric), scaled to roughly 0-1.
+
+    Colourfulness measures the variety and spread of colours, not just average
+    vividness. A scene lit by a single coloured source (e.g. orange haze) is
+    vivid but contains little colour variety, so it scores LOW here even when
+    saturation is high - which is how this separates one-colour scenes from
+    genuinely multicoloured ones. Higher means a wider range of colours.
+    """
+    # Read channels explicitly by name to avoid any positional swap.
+    blue = image_bgr[:, :, 0].astype("float")
+    green = image_bgr[:, :, 1].astype("float")
+    red = image_bgr[:, :, 2].astype("float")
+
+    # Opponent-colour differences (Hasler-Susstrunk).
+    red_green = red - green
+    yellow_blue = 0.5 * (red + green) - blue
+
+    # Combine the spread (std) and the offset (mean) of both opponent channels.
+    std_combined = np.sqrt(red_green.std() ** 2 + yellow_blue.std() ** 2)
+    mean_combined = np.sqrt(red_green.mean() ** 2 + yellow_blue.mean() ** 2)
+    colourfulness = std_combined + 0.3 * mean_combined
+
+    # The metric ranges ~0 to ~150 in practice; /150 keeps typical values in 0-1.
+    return float(colourfulness / 150.0)

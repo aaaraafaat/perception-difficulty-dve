@@ -108,3 +108,81 @@ such cases or fifty. The better check is to view a large sorted strip (about 50
 images) ordered by the dark-channel score, to actually see where night scenes,
 orange-haze scenes, and grey-but-clear scenes sit, and to watch how brightness
 moves together with the dark channel across the whole range.
+
+
+## 2026-06-28 — Dataset description: RTTS and the computed feature set (for thesis)
+
+Dataset. The primary dataset for this stage is RTTS (Real-world Task-driven
+Testing Set), from the RESIDE benchmark. It contains 4,322 real photographs taken
+in genuine hazy and foggy outdoor conditions — not synthetic fog — which makes it
+suitable for studying how degradation behaves in the real world. The images vary
+in size and in scene type (daytime haze, night scenes, scenes lit by coloured
+street and vehicle lighting), and this variety is important: it is exactly what
+exposes where a single fog cue succeeds or fails.
+
+Why real fog matters here. Synthetic fog is added to clear images at a known,
+controlled strength, which is useful for checking that a cue responds to fog at
+all. Real fog has no such ground-truth strength label and comes mixed with other
+conditions (night, coloured light, varied content). RTTS is therefore used to
+test whether cues that seem to measure fog still hold up once these real-world
+confounds are present.
+
+Features computed. For every one of the 4,322 images, seven training-free,
+physics- or image-statistics-based features were computed directly from the
+image, with no learning or labelled data required. Each is a single number per
+image:
+- Dark-channel score — how far the darkest regions have been lifted toward grey
+  (the standard dark-channel-prior haze proxy).
+- Saturation — average colour vividness; fog usually drains colour toward grey.
+- Brightness — overall light level; separates dark/night scenes from bright ones.
+- Contrast — spread from dark to light; fog flattens it.
+- Entropy — amount of detail / tonal variety; fog smooths the scene.
+- Sharpness — crispness of edges; fog blurs them.
+- Noise — pixel-level grain; most relevant to dark / low-light scenes.
+
+Verified value ranges (all 4,322 images). Each feature was range-checked to
+confirm it behaves sensibly: 
+dark-channel 0.00–0.88 (mean 0.45); 
+saturation 0.00–0.96 (mean 0.12, low-heavy, consistent with haze draining colour);
+brightness 0.11–0.94 (mean 0.57, wide enough to separate night from day);
+contrast 0.06–0.81 (mean 0.39); 
+entropy 3.29–7.90 bits (mean 6.94, near the 8-bit ceiling, indicating generally detailed images); 
+sharpness 0.001–1.00 (mean 0.24, bunched low — most images are not razor-sharp); noise 0.005–0.53 (mean 0.07, low, as RTTS is not a heavy-grain dataset). 
+
+Sharpness and noise are both concentrated at the low end, so they may prove weaker discriminators than the others — to be confirmed by the correlation analysis.
+
+Output. All features are stored as one row per image in
+results/tables/features_RTTS.csv, the per-dataset feature table that the
+correlation and failure analysis read from.
+
+## 2026-06-28 — What the seven features show on RTTS (observations)
+
+After computing all seven features on the 4,322 RTTS images, the value ranges
+were examined to understand how each behaves on real fog, before any deeper
+analysis.
+
+All seven produce sensible, varied numbers — none is stuck at one value or
+collapsed. This means each feature is at least responding to something in the
+images and is worth keeping for the comparison.
+
+Two features stand out as likely to be weak on this dataset. Sharpness and noise
+are both bunched at the low end: most images have low sharpness (median around
+0.13) and low noise (median around 0.05), with only a few images higher. In plain
+terms, RTTS images are mostly not razor-sharp and mostly not grainy, so these two
+features do not spread the images out much. A feature that gives nearly the same
+value to most images cannot separate easy from hard images well, so sharpness and
+noise may turn out to be poor indicators here. This is a tentative read from the
+spread alone; the correlation analysis will confirm whether they carry useful
+information or not.
+
+The other five — dark channel, saturation, brightness, contrast, entropy — each
+spread the images across a wide range, so each has the potential to distinguish
+between images. Whether they distinguish them in a way that matches actual fog is
+the next question.
+
+Key point to carry forward. A wide spread only means a feature *can* tell images
+apart; it does not prove the feature tells them apart by fog rather than by
+something else (night, colour, grey content). The earlier discovery — that
+single cues are fooled by night, coloured light, and grey scenes — means a good
+spread is necessary but not sufficient. The real test is how the features relate
+to each other and, ultimately,
