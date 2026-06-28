@@ -79,26 +79,6 @@ def entropy_score(image_bgr):
     return float(-(probabilities * np.log2(probabilities)).sum())
 
 
-def colourfulness_score(image_bgr):
-    """Return a colourfulness measure (Hasler-Susstrunk), scaled to roughly 0-1.
-
-    Colourfulness measures the spread and variety of colours, not just their
-    average vividness. A scene lit by a single coloured light (e.g. orange haze)
-    is vivid but has little colour variety, so it scores LOW here even when
-    saturation is high - which is how this separates one-colour scenes from
-    genuinely multicoloured ones. Higher means a wide variety of colours.
-    """
-    blue, green, red = cv2.split(image_bgr.astype("float"))
-    rg = red - green                       # red-green opposition
-    yb = 0.5 * (red + green) - blue        # yellow-blue opposition
-    rg_std, yb_std = np.std(rg), np.std(yb)
-    rg_mean, yb_mean = np.mean(rg), np.mean(yb)
-    std_root = np.sqrt(rg_std ** 2 + yb_std ** 2)
-    mean_root = np.sqrt(rg_mean ** 2 + yb_mean ** 2)
-    colourfulness = std_root + 0.3 * mean_root
-    return float(colourfulness / 255.0)
-
-
 def sharpness_score(image_bgr):
     """Return image sharpness (variance of the Laplacian), scaled toward 0-1.
 
