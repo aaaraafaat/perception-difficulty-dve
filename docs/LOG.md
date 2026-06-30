@@ -360,3 +360,42 @@ Next session:
   correlation table across the eight features — the first numerical view of which
   cues agree, which are redundant, and which are weak (sharpness and noise
   suspected weak; saturation/colourfulness overlap on grey scenes).
+
+Correlation plot:
+## What the feature correlation shows
+
+The eight features were correlated against each other (Spearman, on the 4,245-image
+clean set) to see which measure the same thing and which are independent. This
+matters because the argument for combining cues only holds if the cues actually
+carry different information. Four findings stand out.
+
+1. Two pairs are strongly redundant. Noise and sharpness correlate at 0.96 — almost
+perfectly — because both react to fine high-frequency detail; on this data they are
+essentially the same signal, and carrying both adds little. Saturation and
+colourfulness correlate at 0.83: they overlap heavily (both drop as colour drains in
+fog) but are not identical. That remaining difference is exactly the orange-haze case
+found earlier — high saturation but lower colourfulness when a scene is flooded by a
+single coloured light.
+
+2. The dark channel and brightness are strongly entangled (0.82). This is the night
+confound expressed as a number: the dark-channel score rises with image brightness,
+so brighter images read as foggier and darker images as clearer — the exact failure
+seen in night scenes, which the dark channel scores as clear. A large part of what
+the dark-channel score reflects is simply how bright the image is, not how foggy.
+
+3. Contrast and entropy are related (0.73). Both capture how much variation and detail
+a scene holds, and fog flattens both. They overlap but each still adds something.
+
+4. Several features are genuinely independent. Brightness is close to zero correlation
+with contrast, colourfulness, and noise, so it carries information none of those do —
+which is why it is useful as a flag for the night condition.
+
+Overall, the eight features collapse into roughly four independent groups:
+brightness with dark channel (illumination and haze, entangled); saturation with
+colourfulness (colour); contrast with entropy (detail and richness); and noise with
+sharpness (fine high-frequency detail, nearly identical). So there are about four
+distinct signals, not eight. This is the basis for combining cues: mixing cues from
+different groups adds information, while mixing within a group does not — and one of
+the near-identical pair (noise or sharpness) could be dropped with little loss. It
+also quantifies the dark channel's contamination by illumination, supporting the
+finding that it is not a clean fog measure on its own.
