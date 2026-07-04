@@ -399,3 +399,6 @@ different groups adds information, while mixing within a group does not — and 
 the near-identical pair (noise or sharpness) could be dropped with little loss. It
 also quantifies the dark channel's contamination by illumination, supporting the
 finding that it is not a clean fog measure on its own.
+
+The dark channel's failures are the coloured scenes
+Colouring the dark-channel vs brightness scatter by saturation links two confounds in one picture. The main diagonal cloud — images that follow the expected relationship — is low saturation (greyish fog). The points that fall off the trend, bright images scored as low dark-channel ("clear"), are high saturation. These are the brightly coloured scenes (such as orange-lit haze). So the dark channel under-reads fog precisely when the scene is bright and vividly coloured: the brightness confound and the colour confound are not separate problems but the same images. The dark channel is least trustworthy exactly where the scene carries strong colour.
