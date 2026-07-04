@@ -402,3 +402,37 @@ finding that it is not a clean fog measure on its own.
 
 The dark channel's failures are the coloured scenes
 Colouring the dark-channel vs brightness scatter by saturation links two confounds in one picture. The main diagonal cloud — images that follow the expected relationship — is low saturation (greyish fog). The points that fall off the trend, bright images scored as low dark-channel ("clear"), are high saturation. These are the brightly coloured scenes (such as orange-lit haze). So the dark channel under-reads fog precisely when the scene is bright and vividly coloured: the brightness confound and the colour confound are not separate problems but the same images. The dark channel is least trustworthy exactly where the scene carries strong colour.
+
+## 2026-06-29 — Literature check and thesis reframing
+
+A literature search settled several questions about the dark-channel score and fog
+estimation, and reshaped the contribution.
+
+What the literature already establishes (so it is not this thesis's novelty):
+- The direction "higher dark-channel score = thicker fog" is validated. Guo, Wang &
+  Li (Atmosphere 2022) state it formally and show a dark-channel-based fog-density
+  index matches Cityscapes fog labels with accuracy up to 0.9812. This is citable as
+  the basis for the score's direction and for using Cityscapes as a reference.
+- The dark channel's failure on bright / large-sky / white-region scenes is a KNOWN
+  limitation, documented in Guo et al. and handled (by down-weighting) in later fog
+  estimators. So the bright/grey confound is real but already known.
+- Multi-cue fusion for fog density (dark channel + saturation + others) is standard
+  and well-published: FADE (2015), JSVC (2017), SFDE (2018), HDE (2021), JSFD (2025)
+  all fuse these cues. Dark channel and saturation are the two most-used features
+  across the field. So fusing cues to estimate fog is NOT a novel contribution.
+- Deep-learning fog/visibility estimators exist (e.g. VENet, 2023) but require large
+  real labelled datasets (~15,000 images), confirming that training on synthetic fog
+  and transferring to real fog is risky.
+
+What remains open (the contribution of this thesis):
+- None of the fog-estimation literature connects the fog/degradation estimate to
+  OBJECT-DETECTION difficulty. They validate against fog-density labels or visibility
+  meters, not against detector performance. The open question — do these training-free
+  degradation cues predict how much object detection degrades, and where does that
+  link hold or break — is the contribution.
+
+Reframed thesis direction: use the established degradation cues (dark channel,
+saturation, etc.) as tools, not as novel methods, and characterise their relationship
+to object-detection difficulty in degraded conditions — including where the cues
+mislead. Established fog estimators (FADE) serve as reference/baseline; Foggy
+Cityscapes (known fog density) serves as the validated reference for the cues.

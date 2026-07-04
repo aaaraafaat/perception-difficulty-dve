@@ -129,3 +129,43 @@ def colourfulness_score(image_bgr):
 
     # The metric ranges ~0 to ~150 in practice; /150 keeps typical values in 0-1.
     return float(colourfulness / 150.0)
+
+def airlight_estimate(image_bgr, patch_size=15, top_fraction=0.001):
+    """Estimate the atmospheric light (airlight) colour of an image.
+
+    Following He et al. (2009): take the brightest 0.1% of pixels in the dark
+    channel (the most haze-opaque locations) and return the mean colour of those
+    pixels in the original image, one value per channel (B, G, R).
+    """
+    dark = dark_channel_map(image_bgr, patch_size)
+    top_count = max(1, int(dark.size * top_fraction))
+    flat_indices = np.argpartition(dark.ravel(), -top_count)[-top_count:]
+    rows, cols = np.unravel_index(flat_indices, dark.shape)
+    return image_bgr[rows, cols].reshape(-1, 3).mean(axis=0)
+
+
+def transmission_map(image_bgr, patch_size=15, omega=0.95):
+    """Estimate the per-pixel transmission map t in [0, 1].
+
+    t = 1 - omega * darkchannel(I / A): the image is normalized per channel by
+    the airlight A, the dark channel of that normalized image is taken, and
+    omega scales it (He et al. 2009). High t means little haze between scene
+    and camera; low t means heavy haze.
+    """
+    airlight = np.maximum(airlight_estimate(image_bgr, patch_size), 1e-6)
+    normalized = image_bgr.astype(np.float64) / airlight
+    min_across_channels = normalized.min(axis=2).astype(np.float32)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (patch_size, patch_size))
+    dark_of_normalized = cv2.erode(min_across_channels, kernel)
+    return 1.0 - omega * np.clip(dark_of_normalized, 0.0, 1.0)
+
+
+def dcp_severity_score(image_bgr, patch_size=15, omega=0.95):
+    """Return the DCP fog-severity score: the mean of (1 - transmission).
+
+    0 means fully transmissive (no estimated haze); the score rises with haze
+    density. No t0 floor is applied: the floor stabilizes image restoration,
+    whereas this function measures.
+    """
+    transmission = transmission_map(image_bgr, patch_size, omega)
+    return float((1.0 - transmission).mean())
