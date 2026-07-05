@@ -1,10 +1,6 @@
 # Work log
 
 ## 2026-06-28 — Setup and load RTTS
-Copied the RTTS dataset (4322 images) from Google Drive to Colab local disk for
-fast access, and made the feature functions in src/features.py importable.
-The full eight-dataset inventory is deferred to its own step, done later when
-needed; RTTS is the focus for the fog-feature stage.
 
 ## 2026-06-28 — Feature 1: dark-channel score (RTTS)
 Computed dark-channel score for all 4322 RTTS images.
@@ -354,13 +350,6 @@ Done:
   (cleaned analysis set, 4,245 images).
 - Notebook: 01_rtts_feature_extraction_and_cleaning.ipynb.
 
-Next session:
-- Optional first: Restart and run all on notebook 01 to confirm reproducibility.
-- Start notebook 02 (analysis): load features_RTTS_clean.csv and build the
-  correlation table across the eight features — the first numerical view of which
-  cues agree, which are redundant, and which are weak (sharpness and noise
-  suspected weak; saturation/colourfulness overlap on grey scenes).
-
 Correlation plot:
 ## What the feature correlation shows
 
@@ -436,3 +425,12 @@ saturation, etc.) as tools, not as novel methods, and characterise their relatio
 to object-detection difficulty in degraded conditions — including where the cues
 mislead. Established fog estimators (FADE) serve as reference/baseline; Foggy
 Cityscapes (known fog density) serves as the validated reference for the cues.
+
+## 2026-07-04 — Notebook 05 closed: DCP severity rebuilt and verified
+Implemented the full estimator from scratch (dark channel, patch 15 → airlight →
+transmission t = 1 − ω·dark(I/A), ω = 0.95 → severity = mean(1 − t); He et al. 2009).
+Verified against the thesis's banked per-image severity: ρ = 0.984 on all 4,322 RTTS
+images. The residual tail is a documented airlight-rule fork (thesis: He's original
+brightest-pixel rule; rebuild: mean of candidates, per variants in Lee et al. 2016),
+confirmed by reproducing the thesis values with the brightest-pixel rule on the
+disagreement set. Outputs: severity_rebuilt_RTTS.csv, fig_13–15.
