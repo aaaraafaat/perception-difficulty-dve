@@ -12,10 +12,9 @@ import numpy as np
 def dark_channel_map(image_bgr, patch_size=15):
     """Return the dark-channel image (single channel, same height and width).
 
-    The dark channel is the per-pixel minimum across the colour channels,
-    followed by a local minimum over a square patch of side `patch_size`. In a
-    clear image most patches contain something genuinely dark, so this stays
-    low; haze lifts those dark values toward grey.
+    Dark channel: per-pixel minimum over B, G, R, then a local minimum over a
+    square patch (He, Sun & Tang 2009, Eq. 5; patch 15 as in the original).
+    Erosion with a rectangular kernel implements the patch-minimum filter.
     """
     min_across_channels = np.min(image_bgr, axis=2)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (patch_size, patch_size))
@@ -133,9 +132,11 @@ def colourfulness_score(image_bgr):
 def airlight_estimate(image_bgr, patch_size=15, top_fraction=0.001):
     """Estimate the atmospheric light (airlight) colour of an image.
 
-    Following He et al. (2009): take the brightest 0.1% of pixels in the dark
-    channel (the most haze-opaque locations) and return the mean colour of those
-    pixels in the original image, one value per channel (B, G, R).
+    Atmospheric light A. Candidates: the top 0.1% brightest pixels of the dark
+    channel (He, Sun & Tang 2009). A is the MEAN colour of the candidates - a
+    deliberate robustness deviation from the original rule (single brightest input
+    pixel), so isolated saturated pixels cannot set A alone. Estimation variants
+    are surveyed in Lee et al. 2016. The 1e-6 floor guards the later division.
     """
     dark = dark_channel_map(image_bgr, patch_size)
     top_count = max(1, int(dark.size * top_fraction))
@@ -147,10 +148,14 @@ def airlight_estimate(image_bgr, patch_size=15, top_fraction=0.001):
 def transmission_map(image_bgr, patch_size=15, omega=0.95):
     """Estimate the per-pixel transmission map t in [0, 1].
 
-    t = 1 - omega * darkchannel(I / A): the image is normalized per channel by
-    the airlight A, the dark channel of that normalized image is taken, and
-    omega scales it (He et al. 2009). High t means little haze between scene
-    and camera; low t means heavy haze.
+    Transmission t = 1 - omega * dark(I / A), omega = 0.95 (He, Sun & Tang
+    2009, Eq. 12), per channel normalization by A, at native resolution. The
+    dark(I/A) term is clipped to [0, 1] as a measurement guard: regions brighter
+    than A in all channels would otherwise drive t negative, a case He handles at
+    restoration via the t0 floor, which is not used here because this function
+    measures rather than restores. The coarse (unrefined) transmission is used:
+    matting/guided-filter refinement re-aligns t to object edges for artifact-free
+    dehazing and is unnecessary for an image-mean measurement.
     """
     airlight = np.maximum(airlight_estimate(image_bgr, patch_size), 1e-6)
     normalized = image_bgr.astype(np.float64) / airlight
@@ -163,9 +168,11 @@ def transmission_map(image_bgr, patch_size=15, omega=0.95):
 def dcp_severity_score(image_bgr, patch_size=15, omega=0.95):
     """Return the DCP fog-severity score: the mean of (1 - transmission).
 
-    0 means fully transmissive (no estimated haze); the score rises with haze
-    density. No t0 floor is applied: the floor stabilizes image restoration,
-    whereas this function measures.
+    Fog severity = mean(1 - t), the average veil fraction, in [0, omega].
+    Algebraically omega * mean(dark(I/A)): a mean-dark-channel density index on
+    the airlight-normalized image. Dark-channel density indices are validated
+    against labelled Cityscapes fog levels at ~0.98 accuracy (Guo, Wang & Li
+    2022); this specific aggregation is the definition adopted by this study.
     """
     transmission = transmission_map(image_bgr, patch_size, omega)
     return float((1.0 - transmission).mean())
