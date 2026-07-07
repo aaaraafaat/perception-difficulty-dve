@@ -444,3 +444,13 @@ points of adjacent conditions: 0.260 / 0.350 / 0.434. Assignment recovers the kn
 condition in 71.9%; 96% of errors are one-bin neighbour slips, 1.1% two-plus bins,
 clear↔heavy corners empty. Direction anchor: Guo, Wang & Li (2022). Outputs:
 severity_calibration_cityscapes.csv, severity_bin_boundaries.csv, fig_16–18.
+
+## 2026-07-06 — Notebook 07 closed: stage-1 failure taxonomy
+Clean RTTS (4,245) binned by own calibrated boundaries: 183/353/607/3102. Low-
+severity regime (sev < 0.350): 536. With the declared recall import (mean of three
+detectors; per-detector robustness 187–270): 214 failures (39.9%), 103 clear
+(19.2%), 219 intermediate. Object-count guard passed (median 5 vs 5). Visuals:
+failure grid mixes flaggable-looking minority (coloured cast, night incl. sev 0.01
+/ recall 0.00) with unremarkable scenes; transmission maps show clear-air readings
+over dark content (Lee 2016 Eq. 16) and dark spots at light sources (He 2009 /
+Yang 2021). Outputs: failure_labels_RTTS.csv, fig_19–23.
