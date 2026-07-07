@@ -434,3 +434,13 @@ images. The residual tail is a documented airlight-rule fork (thesis: He's origi
 brightest-pixel rule; rebuild: mean of candidates, per variants in Lee et al. 2016),
 confirmed by reproducing the thesis values with the brightest-pixel rule on the
 disagreement set. Outputs: severity_rebuilt_RTTS.csv, fig_13–15.
+
+## 2026-07-05 — Notebook 06 closed: severity bins calibrated on known fog density
+Severity computed on 2,000 Cityscapes val images at four known conditions (clear +
+β = 0.005/0.01/0.02 ≈ 600/300/150 m visibility; Sakaridis et al. 2018). Means order
+strictly with density (0.216 / 0.315 / 0.383 / 0.481); ρ(β, severity) = 0.893;
+adjacent Cohen's d = 2.09 / 1.30 / 1.83 (Cohen 1988). Boundaries at the KDE crossing
+points of adjacent conditions: 0.260 / 0.350 / 0.434. Assignment recovers the known
+condition in 71.9%; 96% of errors are one-bin neighbour slips, 1.1% two-plus bins,
+clear↔heavy corners empty. Direction anchor: Guo, Wang & Li (2022). Outputs:
+severity_calibration_cityscapes.csv, severity_bin_boundaries.csv, fig_16–18.
