@@ -176,3 +176,62 @@ def dcp_severity_score(image_bgr, patch_size=15, omega=0.95):
     """
     transmission = transmission_map(image_bgr, patch_size, omega)
     return float((1.0 - transmission).mean())
+
+
+
+
+"""____"""
+
+
+
+
+
+
+
+def median_brightness_score(image_bgr):
+    """Median image brightness: median of the per-pixel value channel
+    (V = max of B, G, R), in 0-255. The median resists bright point sources
+    (headlights, lamps) that inflate MEAN brightness in night scenes - the
+    robust check for night-in-disguise (night handling left open in Bronte,
+    Bergasa & Alcantarilla 2009).
+    """
+    return float(np.median(image_bgr.max(axis=2)))
+
+
+def orange_index_score(image_bgr):
+    """Warm-cast strength: mean(R) - mean(B), in -255..255; positive = warm
+    (orange/sepia) cast. Sand and dust scatter blue more than red, giving a
+    wavelength-dependent per-channel airlight (Wei et al. 2025); a strong
+    positive value flags the coloured-dust condition that violates the DCP's
+    achromatic-airlight assumption.
+    """
+    channel_means = image_bgr.reshape(-1, 3).mean(axis=0)  # B, G, R
+    return float(channel_means[2] - channel_means[0])
+
+
+def channel_spread_score(image_bgr):
+    """Colour-cast magnitude regardless of hue: max - min of the three channel
+    means, in 0-255. Near zero for achromatic scenes; large under any
+    single-colour illumination or atmospheric cast.
+    """
+    channel_means = image_bgr.reshape(-1, 3).mean(axis=0)
+    return float(channel_means.max() - channel_means.min())
+
+
+def rms_contrast_score(image_bgr):
+    """RMS contrast: standard deviation of grey intensity / 255 (Peli 1990).
+    The fog veil compresses the intensity range, lowering contrast.
+    """
+    grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    return float(grey.std() / 255.0)
+
+
+def upper_contrast_score(image_bgr, upper_fraction=0.5):
+    """RMS contrast of the upper image region (top half by default). In road
+    scenes the upper region holds the far field, where fog suppresses contrast
+    first; a fog witness independent of the dark channel (Bronte, Bergasa &
+    Alcantarilla 2009; Hautiere et al. 2006).
+    """
+    grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    upper_region = grey[: int(grey.shape[0] * upper_fraction), :]
+    return float(upper_region.std() / 255.0)
