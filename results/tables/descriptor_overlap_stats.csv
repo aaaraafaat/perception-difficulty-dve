@@ -1,0 +1,6 @@
+descriptor,KS_D,KS_p,MWU_p,AUC
+median_brightness,0.263,0.0012,0.000606,0.638
+orange_index,0.173,0.0797,0.328,0.539
+channel_spread,0.283,0.000386,0.000198,0.65
+rms_contrast,0.255,0.00189,0.000583,0.639
+upper_contrast,0.324,2.6e-05,3.03e-05,0.668

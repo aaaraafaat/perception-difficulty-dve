@@ -454,3 +454,14 @@ failure grid mixes flaggable-looking minority (coloured cast, night incl. sev 0.
 / recall 0.00) with unremarkable scenes; transmission maps show clear-air readings
 over dark content (Lee 2016 Eq. 16) and dark spots at light sources (He 2009 /
 Yang 2021). Outputs: failure_labels_RTTS.csv, fig_19–23.
+
+## 2026-07-06 — Notebook 09 closed: overlap deliverable — no deployable separator
+Appearance rules (one documented calibration round) flag 69/214 failures (dark 32,
+cast_warm 34, cast_cold 3, bright_haze 0 — absent by physics). Residual 145 vs 80
+clear: orange at chance (AUC 0.539); best descriptor upper_contrast AUC 0.668 —
+best threshold catches 92% of failures at 60% false flags. Direction: residual has
+lower far-field contrast (0.191 vs 0.245 — fog real, independent witness) and is
+brighter (106 vs 91.5 — daylight, not night). Mechanism photographed (fig_29):
+dark content prints as clear air (Lee 2016 Eq. 16) + headlight mirror spots (He
+2009/Yang 2021). Outputs: mode_labels_RTTS.csv, descriptor_overlap_stats.csv,
+fig_26–29. The rebuild's §5.6.2a evidence is complete.

@@ -1,0 +1,12 @@
+Descriptor,Invisible Median,Clear Median,p-value (MWU),AUC (Separability)
+sky_variance,1325.05,2947.97,4.08e-06,0.686
+colorfulness,22.28,14.65,1.43e-05,0.675
+upper_contrast,0.19,0.24,3.03e-05,0.668
+ff_nf_ratio,0.62,0.89,5.53e-05,0.662
+channel_spread,10.81,6.14,1.98e-04,0.65
+rms_contrast,0.21,0.24,5.83e-04,0.639
+median_brightness,106.0,91.5,6.06e-04,0.638
+light_gap,145.0,161.0,9.46e-04,0.633
+orange_index,4.32,2.72,3.28e-01,0.539
+entropy,7.45,7.39,3.79e-01,0.536
+sharpness,339.45,342.89,9.55e-01,0.502
