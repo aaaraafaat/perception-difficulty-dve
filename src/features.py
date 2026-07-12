@@ -42,15 +42,13 @@ def saturation_score(image_bgr):
     return float(saturation_channel.mean() / 255.0)
 
 def brightness_score(image_bgr):
-    """Return the mean brightness, scaled to the range 0 to 1.
-
-    Brightness is the overall light level of the image. Computed as the mean of
-    the V (value) channel of the HSV form, which is the per-pixel maximum across
-    colour channels. Low means a dark or night scene; high means a bright one.
+    """Mean perceived luminance: mean of the grayscale image, normalised to
+    [0, 1]. Grayscale (luminance) is used rather than the HSV value channel so
+    that a saturated single-colour cast (e.g. orange dust) is not mistaken for
+    brightness.
     """
-    image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
-    value_channel = image_hsv[:, :, 2]  # the V channel, 0 to 255
-    return float(value_channel.mean() / 255.0)
+    grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    return float(grey.mean() / 255.0)
 
 def contrast_score(image_bgr):
     """Return image contrast as the standard deviation of brightness, scaled to 0-1.
@@ -187,16 +185,14 @@ def dcp_severity_score(image_bgr, patch_size=15, omega=0.95):
 
 
 
-
 def median_brightness_score(image_bgr):
-    """Median image brightness: median of the per-pixel value channel
-    (V = max of B, G, R), in 0-255. The median resists bright point sources
-    (headlights, lamps) that inflate MEAN brightness in night scenes - the
-    robust check for night-in-disguise (night handling left open in Bronte,
-    Bergasa & Alcantarilla 2009).
+    """Median perceived luminance: median of the grayscale image (0-255).
+    Grayscale is used rather than the HSV value channel so a saturated
+    single-colour cast is not mistaken for brightness; the median resists
+    bright point sources (headlights, lamps) in night scenes.
     """
-    return float(np.median(image_bgr.max(axis=2)))
-
+    grey = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    return float(np.median(grey))
 
 def orange_index_score(image_bgr):
     """Warm-cast strength: mean(R) - mean(B), in -255..255; positive = warm
