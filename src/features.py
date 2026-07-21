@@ -144,7 +144,7 @@ def airlight_estimate(image_bgr, patch_size=15, top_fraction=0.001):
 
 
 def transmission_map(image_bgr, patch_size=15, omega=0.95):
-    """Estimate the per-pixel transmission map t in [0, 1].
+    """Estimate the per-pixel transmission map t in [1 − omega, 1].
 
     Transmission t = 1 - omega * dark(I / A), omega = 0.95 (He, Sun & Tang
     2009, Eq. 12), per channel normalization by A, at native resolution. The
